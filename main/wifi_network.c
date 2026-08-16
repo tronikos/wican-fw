@@ -314,7 +314,16 @@
              .threshold.authmode = WIFI_AUTH_WPA3_PSK,
              .rm_enabled = 1,
              .btm_enabled = 1,
-             .scan_method = WIFI_ALL_CHANNEL_SCAN,
+             // WIFI_FAST_SCAN stops at the first AP matching the configured
+             // SSID and threshold instead of sweeping every channel before
+             // deciding, which cuts roughly a second off each association
+             // attempt. That matters for vehicle installs powered from a
+             // switched/ignition line: the device re-associates from cold on
+             // every trip and cannot report anything until the link is up.
+             // An all-channel sweep only pays off when several APs share one
+             // SSID; sort_method still picks the strongest of whatever the
+             // fast scan turns up.
+             .scan_method = WIFI_FAST_SCAN,
              .sort_method = WIFI_CONNECT_AP_BY_SIGNAL,
              .bssid_set = false,
  
