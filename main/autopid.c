@@ -1568,7 +1568,9 @@ static void send_commands(char *commands, uint32_t delay_ms)
             (strstr(str_send, "ate1") == NULL && strstr(str_send, "ATE1") == NULL && strstr(str_send, "at e1") == NULL && strstr(str_send, "AT E1") == NULL))
         {
             elm327_process_cmd((uint8_t *)str_send, cmd_len, &tx_msg, &autopidQueue);
-            while ((xQueueReceive(autopidQueue, &elm327_response, pdMS_TO_TICKS(10)) == pdPASS))
+            // elm327_process_cmd queues its responses synchronously, so
+            // the drain never has to wait.
+            while ((xQueueReceive(autopidQueue, &elm327_response, 0) == pdPASS))
             {
                 autopid_free_response(&elm327_response);
             }
