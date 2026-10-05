@@ -1321,6 +1321,25 @@
       ]
     },
     {
+      "car_model": "Geely: EX5 2026",
+      "init": "ATSP7;ATSHD01635;ATCP1D;ATCRA1EC6AE80;ATFCSH1DD01635;ATFCSD300000;ATFCSM1;",
+      "pids": [
+        {
+          "pid": "2248011",
+          "parameters": [
+            {
+              "name": "SOC",
+              "expression": "([B7:B8]/470)-(117/20)",
+              "unit": "%",
+              "class": "battery",
+              "min": "0",
+              "max": "100"
+            }
+          ]
+        }
+      ]
+    },
+    {
       "car_model": "Geely: Geometry C",
       "init": "ATSP0;ATAT1;ATST96;ATSH7E2;ATFCSH7E2;ATFCSD300000;ATFCSM1;",
       "pids": [
@@ -10527,6 +10546,39 @@
       ]
     },
     {
+      "car_model": "Mazda: EZ-6/6e",
+      "init": "ATSP6;ATAT1;ATST96;ATSH7A1;ATFCSH7A1;ATFCSD300000;ATFCSM1;",
+      "pids": [
+        {
+          "pid": "22F1AF",
+          "pid_init": "ATSH7E2;",
+          "parameters": [
+            {
+              "name": "SOC",
+              "expression": "[B4:B5]/10",
+              "unit": "%",
+              "class": "battery",
+              "min": "0",
+              "max": "100"
+            }
+          ]
+        },
+        {
+          "pid": "22F1AE",
+          "pid_init": "ATSH7E2;",
+          "parameters": [
+            {
+              "name": "ODOMETER",
+              "expression": "[B4:B7]/10",
+              "class": "distance",
+              "unit": "km",
+              "min": "0"
+            }
+          ]
+        }
+      ]
+    },
+    {
       "car_model": "MG: MG5/Marvel/ZS",
       "init": "ATSP6;ATST64;",
       "pids": [
@@ -11798,6 +11850,60 @@
               "expression": "(([B4:B7] * 10) / 10000) - 2000",
               "unit": "A",
               "class": "current"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "car_model": "Toyota: bZ4X 2022-2025",
+      "init": "ATSP6;ATST96;",
+      "pids": [
+        {
+          "pid": "221F5B1",
+          "pid_init": "ATSH7D2;ATCRA7DA;",
+          "parameters": [
+            {
+              "name": "SOC",
+              "expression": "B4/2.55",
+              "unit": "%",
+              "class": "battery",
+              "min": "0",
+              "max": "100"
+            }
+          ]
+        },
+        {
+          "pid": "221F9A2",
+          "pid_init": "ATSH7D2;ATCRA7DA;",
+          "parameters": [
+            {
+              "name": "HV_V",
+              "expression": "((B7*256)+B9)*0.015625",
+              "unit": "V",
+              "class": "voltage",
+              "min": "200",
+              "max": "480"
+            },
+            {
+              "name": "HV_A",
+              "expression": "[S10:S11]*0.1",
+              "unit": "A",
+              "class": "current"
+            }
+          ]
+        },
+        {
+          "pid": "22181A2",
+          "pid_init": "ATSH747;ATCRA74F;",
+          "parameters": [
+            {
+              "name": "HV_C_V_001",
+              "expression": "[B5:B6]/13107",
+              "unit": "V",
+              "class": "battery",
+              "min": "0",
+              "max": "10"
             }
           ]
         }
