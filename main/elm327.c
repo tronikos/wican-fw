@@ -851,8 +851,8 @@ static int8_t elm327_request(char *cmd, char *rsp, QueueHandle_t *queue)
 	// time to every OBD command.
 	while( xQueueReceive(*can_rx_queue, ( void * ) &rx_frame, 0) == pdPASS );
 	can_flush_rx();
-	can_send(&txframe, 1);
 	xEventGroupSetBits(elm327_event_group, ELM327_READY_TO_RECEIVE_CAN);
+	can_send(&txframe, 1);
 
 	TickType_t xtimeout = (elm327_config.req_timeout*4.096) / portTICK_PERIOD_MS;
 	TickType_t xwait_time;
@@ -975,6 +975,7 @@ static int8_t elm327_request(char *cmd, char *rsp, QueueHandle_t *queue)
 					    rx_frame.data[3] == 0x78)
 					{
 						message_complete = 0;
+						number_of_rsp--;
 					}
 					else
 					{
