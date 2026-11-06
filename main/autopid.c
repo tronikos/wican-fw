@@ -69,6 +69,7 @@ static response_t elm327_response;
 static autopid_value_t *autopid_values = NULL;
 static uint32_t autopid_values_count = 0;
 static SemaphoreHandle_t autopid_values_mutex = NULL;
+static volatile bool first_sweep_done = false;
 
 //Helper functions
 // Custom printer function to format numbers with 2 decimal places
@@ -939,6 +940,7 @@ void autopid_update_values(void)
 
     xSemaphoreGive(autopid_values_mutex);
     xSemaphoreGive(all_pids->mutex);
+    first_sweep_done = true;
     
     // ESP_LOGI(TAG, "Updated %lu autopid values from all_pids", value_index);
     // DEBUG_LOGI(TAG, "Updated %lu autopid values from all_pids", value_index);
@@ -2577,7 +2579,15 @@ static void autopid_webhook_task(void *pvParameters)
 
                 // Post as soon as STA connects after boot instead of waiting a full
                 // interval of uptime: on a device powered with the ignition, the
-                // first report races the vehicle out of Wi-Fi range.
+                // first report races the vehicle out of Wi-Fi range. Wait briefly
+                // for the first AutoPID poll sweep to finish so the initial post
+                // carries OBD readings instead of an empty autopid_data object.
+                if (!first_post_done && !first_sweep_done && now < 15)
+                {
+                    vTaskDelay(pdMS_TO_TICKS(250));
+                    continue;
+                }
+
                 if (!first_post_done || (now - last_post_time) >= interval_sec)
                 {
                     first_post_done = true;
@@ -2627,13 +2637,6 @@ static void autopid_webhook_task(void *pvParameters)
                                     cfg_payload = json_object_diff_simple(cfg_curr, prev);
                                     if (prev)
                                         cJSON_Delete(prev);
-
-                                    char *snap = cJSON_PrintUnformatted(cfg_curr);
-                                    if (snap)
-                                    {
-                                        free(prev_config_snapshot);
-                                        prev_config_snapshot = snap;
-                                    }
                                 }
 
                                 // STATUS
@@ -2648,13 +2651,6 @@ static void autopid_webhook_task(void *pvParameters)
                                     sts_payload = json_object_diff_simple(sts_curr, prev);
                                     if (prev)
                                         cJSON_Delete(prev);
-
-                                    char *snap = cJSON_PrintUnformatted(sts_curr);
-                                    if (snap)
-                                    {
-                                        free(prev_status_snapshot);
-                                        prev_status_snapshot = snap;
-                                    }
                                 }
 
                                 // AUTOPID_DATA
@@ -2669,13 +2665,6 @@ static void autopid_webhook_task(void *pvParameters)
                                     auto_payload = json_object_diff_simple(auto_curr, prev);
                                     if (prev)
                                         cJSON_Delete(prev);
-
-                                    char *snap = cJSON_PrintUnformatted(auto_curr);
-                                    if (snap)
-                                    {
-                                        free(prev_autopid_snapshot);
-                                        prev_autopid_snapshot = snap;
-                                    }
                                 }
 
                                 // Per-parameter unit/class metadata. Consumers such as
@@ -2758,6 +2747,27 @@ static void autopid_webhook_task(void *pvParameters)
                                     {
                                         if (param_meta_pending)
                                             param_meta_posted = true;
+                                        if (!send_full_data)
+                                        {
+                                            char *snap = cJSON_PrintUnformatted(cfg_curr);
+                                            if (snap)
+                                            {
+                                                free(prev_config_snapshot);
+                                                prev_config_snapshot = snap;
+                                            }
+                                            snap = cJSON_PrintUnformatted(sts_curr);
+                                            if (snap)
+                                            {
+                                                free(prev_status_snapshot);
+                                                prev_status_snapshot = snap;
+                                            }
+                                            snap = cJSON_PrintUnformatted(auto_curr);
+                                            if (snap)
+                                            {
+                                                free(prev_autopid_snapshot);
+                                                prev_autopid_snapshot = snap;
+                                            }
+                                        }
                                         upd.success_count++;
                                         upd.retries = 0;
                                         strlcpy(upd.status, "ok", sizeof(upd.status));
