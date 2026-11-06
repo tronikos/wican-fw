@@ -1565,6 +1565,10 @@ static void send_commands(char *commands, uint32_t delay_ms)
     while ((cmd_end = strchr(cmd_start, '\r')) != NULL) 
     {
         size_t cmd_len = cmd_end - cmd_start + 1; // +1 to include '\r'
+        if (cmd_len <= 1) {
+            cmd_start = cmd_end + 1;
+            continue;
+        }
         char str_send[cmd_len + 1]; // +1 for null terminator
         strncpy(str_send, cmd_start, cmd_len);
         str_send[cmd_len] = '\0'; // Null-terminate the command string
