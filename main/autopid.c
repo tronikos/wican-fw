@@ -1566,6 +1566,9 @@ static void send_commands(char *commands, uint32_t delay_ms)
     while ((cmd_end = strchr(cmd_start, '\r')) != NULL) 
     {
         size_t cmd_len = cmd_end - cmd_start + 1; // +1 to include '\r'
+        // Skip empty commands: a pid_init that already ends in ';' becomes
+        // "...\r\r" once the trailing '\r' is appended, and the empty
+        // command between the two '\r' must not be sent to the ELM327.
         if (cmd_len <= 1) {
             cmd_start = cmd_end + 1;
             continue;
@@ -1573,11 +1576,7 @@ static void send_commands(char *commands, uint32_t delay_ms)
         char str_send[cmd_len + 1]; // +1 for null terminator
         strncpy(str_send, cmd_start, cmd_len);
         str_send[cmd_len] = '\0'; // Null-terminate the command string
-        // Skip empty commands: a pid_init that already ends in ';' becomes
-        // "...\r\r" once the trailing '\r' is appended, and the empty
-        // command between the two '\r' must not be sent to the ELM327.
-        if (cmd_len > 1 &&
-            (strstr(str_send, "ath0") == NULL && strstr(str_send, "ATH0") == NULL && strstr(str_send, "at h0") == NULL && strstr(str_send, "AT H0") == NULL) &&
+        if ((strstr(str_send, "ath0") == NULL && strstr(str_send, "ATH0") == NULL && strstr(str_send, "at h0") == NULL && strstr(str_send, "AT H0") == NULL) &&
             (strstr(str_send, "ats0") == NULL && strstr(str_send, "ATS0") == NULL && strstr(str_send, "at s0") == NULL && strstr(str_send, "AT s0") == NULL) &&
             (strstr(str_send, "ate1") == NULL && strstr(str_send, "ATE1") == NULL && strstr(str_send, "at e1") == NULL && strstr(str_send, "AT E1") == NULL))
         {
@@ -1792,6 +1791,10 @@ static void autopid_task(void *pvParameters)
                 {
                     // autopid_data_write
                     if(curr_pid->pid_type != previous_pid_type) {
+                        if(last_response_ok) {
+                            autopid_free_response(&elm327_response);
+                            last_response_ok = false;
+                        }
                         // Send appropriate initialization based on new PID type
                         switch(curr_pid->pid_type) {
                             case PID_CUSTOM:
